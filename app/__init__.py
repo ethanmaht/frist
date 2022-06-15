@@ -6,3 +6,6 @@ def create_app():
     # app.config.from_object(config_name)
 
     return app
+
+
+app = Flask(__name__)
