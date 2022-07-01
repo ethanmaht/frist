@@ -1,7 +1,9 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import jwt, datetime
-from .. import config
-from .. import common
+from app import config
+from app import common
+from app.users.model import Users
+import time
 
 
 class Auth:
@@ -35,8 +37,8 @@ class Auth:
         except jwt.InvalidTokenError:
             return 'Token 无效'
 
-    def identify(self, request):
-        auth_header = request.headers.get('Authorization')
+    def identify(self, requests):
+        auth_header = requests.headers.get('Authorization')
         if auth_header:
             auth_tokenArr = auth_header.split(" ")
             if not auth_tokenArr or auth_tokenArr[0] != 'JWT' or len(auth_tokenArr) != 2:
@@ -45,7 +47,24 @@ class Auth:
                 auth_token = auth_tokenArr[1]
                 payload = self.decode_auth_token(auth_token)
                 if not isinstance(payload, str):
-                    user = Users.get
+                    user = Users().check(payload['data']['id'])
+                    result = common.true_return(user.userid, '请求成功')
                 else:
                     result = common.false_return('', payload)
+        else:
+            result = common.false_return('', '头信息不正确')
+        return result
+
+    def authenticate(self, username, password):
+        user_info = Users().query(username, password)
+        if user_info:
+            user_id = user_info
+            login_time = int(time.time())
+            token = self.encode_auth_token(user_id, login_time)
+            # return jsonify(common.true_return(token.decode(), '登录成功'))
+            print(token)
+            return jsonify(common.true_return(token, '登录成功'))
+        else:
+            return jsonify('', '账号或密码错误')
+
 
