@@ -1,9 +1,16 @@
 from flask import Flask, request, jsonify
+from flask_login import login_user
 import jwt, datetime
 from app import config
 from app import common
 from app.users.model import Users
 import time
+from wtforms import BooleanField
+from functools import wraps
+from flask import render_template, flash, redirect, url_for, Blueprint
+
+
+auth_bp = Blueprint('auth', __name__)
 
 
 class Auth:
@@ -62,9 +69,7 @@ class Auth:
             login_time = int(time.time())
             token = self.encode_auth_token(user_id, login_time)
             # return jsonify(common.true_return(token.decode(), '登录成功'))
-            print(token)
             return jsonify(common.true_return(token, '登录成功'))
         else:
             return jsonify('', '账号或密码错误')
-
 
