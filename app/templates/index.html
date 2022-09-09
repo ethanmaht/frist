@@ -3,12 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>hallo</title>
+    <script type="text/javascript" src="../static/jquery-3.6.0.js"></script>
+    <script>
+    window.onload=function(){  //这是页面加载完,就执行
+        console.log(2222)
+        $("#login").on('click',function(){
+        $.ajax({url:"",type:"post",success:function(result){
+                    console.log(result);
+                }});
+        })
+    }
+
+    function myFunction(){
+        document.getElementById("demo").innerHTML=result;
+    }
+    </script>
 </head>
+
 <body>
-    <div id="login">
-        <p>
-            <input type = "submit" value = "test" name = "test" />
-        </p>
-    </div>
+    <p id="demo">一个段落。</p>
+    <button id="login">点击这里1</button>
 </body>
 </html>

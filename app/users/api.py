@@ -1,7 +1,8 @@
 from functools import wraps
 import jwt
-from flask import g, request, Flask, current_app, jsonify
+from flask import g, request, Flask, current_app, jsonify, Response, make_response, Blueprint
 import datetime
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
 import os
 from app.users.model import Users
 from ..users import model
@@ -13,64 +14,94 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms import ValidationError
 from wtforms.validators import DataRequired, Length, Email, EqualTo, Regexp
-try:
-    from urlparse import urlparse, urljoin
-except ImportError:
-    from urllib.parse import urlparse, urljoin
 
-login_manager = LoginManager()
+from flask_cors import cross_origin
+# Access-Control-Allow-Origin
+# login_manager = LoginManager()
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    user = model.Users()
-    return user
+SECRET_KEY = 'TEST'
+
+#
+# @login_manager.user_loader
+# def load_user(user_id):
+#     user = model.Users()
+#     return user
 
 
 def init_api(app):
-    @app.route('/login', methods=['GET', 'POST'])
-    def register():
-        # print(url_for('index'))
-        form = LoginForm()
+    @app.route('/login/', methods=['GET', 'POST'])
+    def login():
         if request.method == 'POST':
-            username = request.form.get('username')
-            password = request.form.get('password')
-            user = model.Users()
-            if not username or not password:
-                flash('username or password', 'info')
-            else:
-                if login_user(user):
-                    flash('Login success.', 'info')
-                    return redirect_back()
+
+            re_mas = make_response(index())
+            re_mas.status = 200
+            re_mas.headers['Authorization'] = 'token'
+            return re_mas
         return render_template('login.html')
 
-    @app.route('/index', methods=['GET', 'POST'])
-    @login_manager.user_loader
+    @app.route('/index/', methods=['GET', 'POST'])
     def index():
-        print(111111, )
-        confirm_login()
-        print(222222, )
+        import time
+        time.sleep(1)
+        if request.method == 'POST':
+            auth_header = request.headers
+            print(auth_header)
         return render_template('index.html')
 
-
-class LoginForm(FlaskForm):
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember_me = BooleanField('Remember me')
-    submit = SubmitField('Log in')
+    @app.route('/logout/')
+    def logout():
+        logout_user()  # 登出用户
+        flash('Goodbye.')
+        return redirect(url_for('login'))  # 重定向回首页
 
 
 def redirect_back(default='index', **kwargs):
-    for target in request.args.get('next'), request.referrer:
-        if not target:
-            continue
-        if is_safe_url(target):
-            return redirect(target)
-    # return redirect(url_for(default, **kwargs))
-    return redirect('/index')
+    # for target in request.args.get('next'), request.referrer:
+    #     if not target:
+    #         continue
+    #     if is_safe_url(target):
+    #         return redirect(target)
+    return redirect('/index/')
 
 
-def is_safe_url(target):
-    ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and \
-        ref_url.netloc == test_url.netloc
+def true_return(data, msg):
+    return {
+        "status": True,
+        "data": data,
+        "msg": msg
+    }
+
+
+def false_return(data=None, msg=''):
+    return {
+        "status": False,
+        "data": data,
+        "msg": msg
+    }
+
+
+def encode_auth_token(user_id, login_time):
+    """
+    生成认证Token
+    :param user_id: int
+    :param login_time: int(timestamp)
+    :return: string
+    """
+    try:
+        payload = {
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=10),
+            'iat': datetime.datetime.utcnow(),
+            'iss': 'ken',
+            'data': {
+                'id': user_id,
+                'login_time': login_time
+            }
+        }
+        return jwt.encode(
+            payload,
+            SECRET_KEY,
+            algorithm='HS256'
+        )
+    except Exception as e:
+        return e

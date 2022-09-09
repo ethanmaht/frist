@@ -7,12 +7,15 @@ def create_app(config_name):
 
     @app.after_request
     def after_request(response):
-        response.headers.add('Access-Contorol-Allow_Origin', '*')
+        # response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Authorization')
+        print(request.method)
         if request.method == 'OPTIONS':
-            response.headers['Access-Contorol-Allow_Methods'] = 'DELETE, GET, POST, PUT'
-            headers = request.headers.get('Access-Contorol-Allow_Headers')
+            print(1111111111111)
+            response.headers['Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
+            headers = request.headers.get('Access-Control-Allow-Headers')
             if headers:
-                response.headers['Access-Contorol-Allow_Headers'] = headers
+                response.headers['Access-Control-Allow-Headers'] = headers
         return response
 
     from app.users.api import init_api
